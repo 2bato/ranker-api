@@ -7,7 +7,7 @@ class Session(models.Model):
     code = models.CharField(max_length=10, unique=True, blank=False)
     latitude = models.FloatField()
     longitude = models.FloatField()
-    restaurants = models.JSONField(default=list)
+    restaurants = models.JSONField(default=list, blank=True)
 
     def __str__(self):
         return self.code

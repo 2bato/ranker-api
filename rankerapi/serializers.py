@@ -11,5 +11,5 @@ class SessionSerializer(serializers.ModelSerializer):
             "code",
             "latitude",
             "longitude",
-            "resaurants",
+            "restaurants",
         ]

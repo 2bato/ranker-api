@@ -1,6 +1,6 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, filters
+from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
 from .models import Session
 from .serializers import SessionSerializer
 
@@ -14,4 +14,4 @@ class SessionViewSet(viewsets.ModelViewSet):
     serializer_class = SessionSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["code"]
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [AllowAny]
