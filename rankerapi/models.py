@@ -8,6 +8,20 @@ class Session(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     restaurants = models.JSONField(default=list, blank=True)
+    count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.code
+
+    @property
+    def users(self):
+        return self.sessionuser_set.all()
+
+
+class SessionUser(models.Model):
+    username = models.CharField(max_length=100, blank=False)
+    session = models.ForeignKey(Session, related_name="users", on_delete=models.CASCADE)
+    rankings = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return self.username

@@ -52,7 +52,9 @@ def session_post_save(sender, instance, created, **kwargs):
 
             data = response.json()
 
-            instance.restaurants = data
+            instance.restaurants = data.get("places", [])
+            print(len(instance.restaurants))
+            instance.count = len(instance.restaurants)
             instance.save()
             # filtered_data = places_data
 

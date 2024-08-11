@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Session
+from .models import Session, SessionUser
+
+
+class SessionUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SessionUser
+        fields = ["id", "username", "rankings"]
 
 
 class SessionSerializer(serializers.ModelSerializer):
@@ -11,5 +17,6 @@ class SessionSerializer(serializers.ModelSerializer):
             "code",
             "latitude",
             "longitude",
+            "count",
             "restaurants",
         ]

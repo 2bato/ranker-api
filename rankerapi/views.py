@@ -15,3 +15,4 @@ class SessionViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["code"]
     permission_classes = [AllowAny]
+    lookup_field = "code"
