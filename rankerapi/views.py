@@ -1,8 +1,8 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Session
-from .serializers import SessionSerializer
+from .models import Session, SessionUser
+from .serializers import SessionSerializer, SessionUserSerializer
 
 
 class SessionViewSet(viewsets.ModelViewSet):
@@ -16,3 +16,8 @@ class SessionViewSet(viewsets.ModelViewSet):
     filterset_fields = ["code"]
     permission_classes = [AllowAny]
     lookup_field = "code"
+
+
+class SessionUserViewSet(viewsets.ModelViewSet):
+    queryset = SessionUser.objects.all()
+    serializer_class = SessionUserSerializer

@@ -5,14 +5,13 @@ from .models import Session, SessionUser
 class SessionUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = SessionUser
-        fields = ["id", "username", "rankings"]
+        fields = ["id", "username", "session", "rankings"]
 
 
 class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
         fields = [
-            "id",
             "created",
             "code",
             "latitude",
