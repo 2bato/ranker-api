@@ -7,7 +7,7 @@ class Session(models.Model):
     code = models.CharField(primary_key=True, max_length=10, unique=True, blank=False)
     latitude = models.FloatField()
     longitude = models.FloatField()
-    restaurants = models.JSONField(default=list, blank=True)
+    restaurants = models.ManyToManyField("Restaurant", blank=True)
     count = models.IntegerField(default=0)
 
     def __str__(self):
@@ -16,6 +16,16 @@ class Session(models.Model):
     @property
     def users(self):
         return self.sessionuser_set.all()
+
+
+class Restaurant(models.Model):
+    name = models.CharField(max_length=255)
+    photo_url = models.URLField(blank=True)
+    rating = models.FloatField()
+    veto = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
 
 
 class SessionUser(models.Model):

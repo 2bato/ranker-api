@@ -2,15 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 import requests
 import random
-from .models import Session
-
-
-class Restaurant:
-    def __init__(self, display_name, photo_url, rating, success):
-        self.display_name = display_name
-        self.photo_url = photo_url
-        self.rating = rating
-        self.success = success
+from .models import Session, Restaurant
 
 
 @receiver(post_save, sender=Session)
@@ -52,9 +44,34 @@ def session_post_save(sender, instance, created, **kwargs):
 
             data = response.json()
 
-            instance.restaurants = data.get("places", [])
-            print(len(instance.restaurants))
-            instance.count = len(instance.restaurants)
+            places = data.get("places", [])
+            for place in places:
+                name = place.get("displayName", {}).get("text", "Unnamed Restaurant")
+                rating = place.get("rating")
+                if (
+                    "photos" in place
+                    and len(place["photos"]) > 0
+                    and rating > 0
+                    and name != "Unnamed Restaurant"
+                ):
+                    temp_url = place["photos"][0]["name"]
+                    print(temp_url)
+                    index = temp_url.find("photos/")
+
+                    if index != -1:
+                        photo_reference = temp_url[index + len("photos/") :]
+                    photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_reference}&key={api_key}"
+
+                    restaurant, created = Restaurant.objects.get_or_create(
+                        name=name,
+                        defaults={
+                            "rating": rating,
+                            "photo_url": photo_url,
+                        },
+                    )
+
+                    instance.restaurants.add(restaurant)
+            instance.count = instance.restaurants.count()
             instance.save()
             # filtered_data = places_data
 

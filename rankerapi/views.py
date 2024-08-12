@@ -1,8 +1,8 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Session, SessionUser
-from .serializers import SessionSerializer, SessionUserSerializer
+from .models import Session, SessionUser, Restaurant
+from .serializers import SessionSerializer, SessionUserSerializer, RestaurantSerializer
 
 
 class SessionViewSet(viewsets.ModelViewSet):
@@ -21,3 +21,8 @@ class SessionViewSet(viewsets.ModelViewSet):
 class SessionUserViewSet(viewsets.ModelViewSet):
     queryset = SessionUser.objects.all()
     serializer_class = SessionUserSerializer
+
+
+class RestaurantViewSet(viewsets.ModelViewSet):
+    queryset = Restaurant.objects.all()
+    serializer_class = RestaurantSerializer
