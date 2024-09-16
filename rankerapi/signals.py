@@ -3,14 +3,17 @@ from django.dispatch import receiver
 import requests
 import random
 from .models import Session, Restaurant
+from dotenv import load_dotenv
+import os
 
 
 @receiver(post_save, sender=Session)
 def session_post_save(sender, instance, created, **kwargs):
     if created:
+        load_dotenv()
 
         location = {"latitude": instance.latitude, "longitude": instance.longitude}
-        api_key = "AIzaSyAXpRKeA6lCOiYOwwnJbx7j9GUvBig8MLw"
+        api_key = os.getenv("GOOGLE_API_KEY")
 
         request_payload = {
             "includedTypes": ["restaurant"],
