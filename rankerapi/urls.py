@@ -7,6 +7,7 @@ from .views import (
     VetoView,
     NonVetoedView,
     RankingView,
+    ResultView,
 )
 
 router = DefaultRouter()
@@ -32,4 +33,5 @@ urlpatterns = [
         RankingView.as_view(),
         name="ranking",
     ),
+    path("sessions/<str:session_code>/result/", ResultView.as_view(), name="result"),
 ]

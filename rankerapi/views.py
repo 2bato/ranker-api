@@ -28,6 +28,7 @@ class SessionUserViewSet(viewsets.ModelViewSet):
     serializer_class = SessionUserSerializer
     permission_classes = [AllowAny]
 
+
 class RestaurantViewSet(viewsets.ModelViewSet):
     queryset = Restaurant.objects.all()
     serializer_class = RestaurantSerializer
@@ -147,3 +148,29 @@ class RankingView(APIView):
             )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResultView(APIView):
+    def get(self, request, session_code):
+        try:
+            session = Session.objects.get(code=session_code)
+
+            restaurants = session.restaurants.all()
+
+            result = []
+            for restaurant in restaurants:
+                result.append(
+                    {
+                        "name": restaurant.name,
+                        "rating": restaurant.rating,
+                        "overall_rank": restaurant.overall_rank,
+                        "photo_url": restaurant.photo_url,
+                    }
+                )
+
+            return Response(result, status=status.HTTP_200_OK)
+
+        except Session.DoesNotExist:
+            return Response(
+                {"error": "Session not found!"}, status=status.HTTP_404_NOT_FOUND
+            )
