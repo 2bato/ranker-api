@@ -1,6 +1,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import SessionViewSet, SessionUserViewSet, RestaurantViewSet, VetoView
+from .views import (
+    SessionViewSet,
+    SessionUserViewSet,
+    RestaurantViewSet,
+    VetoView,
+    NonVetoedView,
+)
 
 router = DefaultRouter()
 router.register(r"sessions", SessionViewSet)
@@ -14,5 +20,10 @@ urlpatterns = [
         "sessions/<str:session_code>/veto/",
         VetoView.as_view(),
         name="veto",
+    ),
+    path(
+        "sessions/<str:session_code>/nonvetoed/",
+        NonVetoedView.as_view(),
+        name="nonveto",
     ),
 ]
