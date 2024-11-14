@@ -23,7 +23,7 @@ class Restaurant(models.Model):
     photo_url = models.URLField(blank=True)
     rating = models.FloatField()
     veto = models.BooleanField(default=False)
-
+    overall_rank = models.FloatField(default=0)
     def __str__(self):
         return self.name
 

@@ -70,6 +70,7 @@ def session_post_save(sender, instance, created, **kwargs):
                         defaults={
                             "rating": rating,
                             "photo_url": photo_url,
+                            "rank": 0
                         },
                     )
 
