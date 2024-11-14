@@ -32,7 +32,7 @@ def session_post_save(sender, instance, created, **kwargs):
         headers = {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": api_key,
-            "X-Goog-FieldMask": "places.displayName,places.rating,places.priceLevel,places.businessStatus,places.types,places.photos",
+            "X-Goog-FieldMask": "places.displayName,places.rating,places.priceLevel,places.businessStatus,places.types,places.photos,places.currentOpeningHours",
         }
 
         try:
@@ -40,6 +40,7 @@ def session_post_save(sender, instance, created, **kwargs):
                 "https://places.googleapis.com/v1/places:searchNearby",
                 json=request_payload,
                 headers=headers,
+                verify=False,
             )
 
             if response.status_code != 200:
@@ -49,16 +50,18 @@ def session_post_save(sender, instance, created, **kwargs):
 
             places = data.get("places", [])
             for place in places:
+                current_opening_hours = place.get("currentOpeningHours", {})
+                open_now = current_opening_hours.get("openNow", False)
                 name = place.get("displayName", {}).get("text", "Unnamed Restaurant")
                 rating = place.get("rating")
                 if (
-                    "photos" in place
+                    open_now
+                    and "photos" in place
                     and len(place["photos"]) > 0
                     and rating > 0
                     and name != "Unnamed Restaurant"
                 ):
                     temp_url = place["photos"][0]["name"]
-                    print(temp_url)
                     index = temp_url.find("photos/")
 
                     if index != -1:
@@ -70,7 +73,7 @@ def session_post_save(sender, instance, created, **kwargs):
                         defaults={
                             "rating": rating,
                             "photo_url": photo_url,
-                            "rank": 0
+                            "overall_rank": 0,
                         },
                     )
 
