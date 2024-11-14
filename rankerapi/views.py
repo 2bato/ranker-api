@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from .models import Session, SessionUser, Restaurant
 from .serializers import (
     SessionSerializer,
@@ -26,7 +26,7 @@ class SessionViewSet(viewsets.ModelViewSet):
 class SessionUserViewSet(viewsets.ModelViewSet):
     queryset = SessionUser.objects.all()
     serializer_class = SessionUserSerializer
-
+    permission_classes = [AllowAny]
 
 class RestaurantViewSet(viewsets.ModelViewSet):
     queryset = Restaurant.objects.all()
@@ -34,7 +34,7 @@ class RestaurantViewSet(viewsets.ModelViewSet):
 
 
 class VetoView(APIView):
-    def post(self, request, session_code, *args, **kwargs):
+    def post(self, request, session_code):
         session = get_object_or_404(Session, code=session_code)
 
         vetoed_restaurants = request.data.get("vetoed_restaurants", [])
@@ -59,13 +59,28 @@ class VetoView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        with transaction.atomic():
-            session.restaurants.filter(id__in=vetoed_restaurants).update(veto=True)
+        try:
+            with transaction.atomic():
+                session.restaurants.filter(id__in=vetoed_restaurants).update(veto=True)
 
-        return Response(
-            {"detail": "Restaurants successfully vetoed."},
-            status=status.HTTP_200_OK,
-        )
+            return Response(
+                {"detail": "Restaurants successfully vetoed."},
+                status=status.HTTP_200_OK,
+            )
+
+        except IntegrityError as e:
+            return Response(
+                {
+                    "detail": "Database integrity error occurred. Please try again later."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except Exception as e:
+            return Response(
+                {"detail": f"An unexpected error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class NonVetoedView(APIView):
@@ -90,6 +105,45 @@ class NonVetoedView(APIView):
         except Session.DoesNotExist:
             return Response(
                 {"error": "Session not found!"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RankingView(APIView):
+    def put(self, request, session_code):
+        try:
+            session = Session.objects.get(code=session_code)
+            username = request.data.get("username")
+            user = SessionUser.objects.get(session_code=session, username=username)
+
+            rankings_data = request.data.get("rankings", {})
+
+            user.rankings = rankings_data
+            user.save()
+
+            for restaurant_id, ranking in rankings_data.items():
+                try:
+                    restaurant = Restaurant.objects.get(id=restaurant_id)
+                    restaurant.overall_rank += ranking
+                    restaurant.save()
+                except Restaurant.DoesNotExist:
+                    return Response(
+                        {"error": f"Restaurant with ID {restaurant_id} not found"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            return Response(
+                {"message": "Rankings updated successfully."}, status=status.HTTP_200_OK
+            )
+
+        except Session.DoesNotExist:
+            return Response(
+                {"error": "Session not found!"}, status=status.HTTP_404_NOT_FOUND
+            )
+        except SessionUser.DoesNotExist:
+            return Response(
+                {"error": "User not found in this session."},
+                status=status.HTTP_404_NOT_FOUND,
             )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

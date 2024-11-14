@@ -6,6 +6,7 @@ from .views import (
     RestaurantViewSet,
     VetoView,
     NonVetoedView,
+    RankingView,
 )
 
 router = DefaultRouter()
@@ -25,5 +26,10 @@ urlpatterns = [
         "sessions/<str:session_code>/nonvetoed/",
         NonVetoedView.as_view(),
         name="nonveto",
+    ),
+    path(
+        "sessions/<str:session_code>/ranking/",
+        RankingView.as_view(),
+        name="ranking",
     ),
 ]

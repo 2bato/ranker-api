@@ -3,6 +3,10 @@ from .models import Session, SessionUser, Restaurant
 
 
 class SessionUserSerializer(serializers.ModelSerializer):
+    session_code = serializers.SlugRelatedField(
+        slug_field="code", queryset=Session.objects.all()
+    )
+
     class Meta:
         model = SessionUser
         fields = ["id", "username", "session", "rankings"]
