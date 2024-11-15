@@ -35,7 +35,7 @@ class RestaurantViewSet(viewsets.ModelViewSet):
 
 
 class VetoView(APIView):
-    def post(self, request, session_code):
+    def put(self, request, session_code):
         session = get_object_or_404(Session, code=session_code)
 
         vetoed_restaurants = request.data.get("vetoed_restaurants", [])
