@@ -1,13 +1,11 @@
 from django.db import models
 
 
-# Create your models here.
 class Session(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     code = models.CharField(primary_key=True, max_length=10, unique=True, blank=False)
     latitude = models.FloatField()
     longitude = models.FloatField()
-    restaurants = models.ManyToManyField("Restaurant", blank=True)
     count = models.IntegerField(default=0)
 
     def __str__(self):
@@ -24,6 +22,14 @@ class Restaurant(models.Model):
     rating = models.FloatField()
     veto = models.BooleanField(default=False)
     overall_rank = models.FloatField(default=0)
+    session = models.ForeignKey(
+        Session,
+        related_name="restaurants",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
     def __str__(self):
         return self.name
 

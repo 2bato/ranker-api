@@ -1,8 +1,6 @@
 from django.contrib import admin
 from .models import Session, SessionUser, Restaurant
 
-# Register your models here.
-
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
@@ -19,4 +17,16 @@ class SessionUserAdmin(admin.ModelAdmin):
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "rating", "photo_url", "veto")
+    list_display = (
+        "id",
+        "name",
+        "rating",
+        "photo_url",
+        "veto",
+        "session",
+    )
+    search_fields = (
+        "name",
+        "session__code",
+    )
+    list_filter = ("session", "veto")

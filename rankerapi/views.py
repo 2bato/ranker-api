@@ -133,6 +133,7 @@ class RankingView(APIView):
                         {"error": f"Restaurant with ID {restaurant_id} not found"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+
             return Response(
                 {"message": "Rankings updated successfully."}, status=status.HTTP_200_OK
             )
@@ -157,16 +158,15 @@ class ResultView(APIView):
 
             restaurants = session.restaurants.all()
 
-            result = []
-            for restaurant in restaurants:
-                result.append(
-                    {
-                        "name": restaurant.name,
-                        "rating": restaurant.rating,
-                        "overall_rank": restaurant.overall_rank,
-                        "photo_url": restaurant.photo_url,
-                    }
-                )
+            result = [
+                {
+                    "name": restaurant.name,
+                    "rating": restaurant.rating,
+                    "overall_rank": restaurant.overall_rank,
+                    "photo_url": restaurant.photo_url,
+                }
+                for restaurant in restaurants
+            ]
 
             return Response(result, status=status.HTTP_200_OK)
 
