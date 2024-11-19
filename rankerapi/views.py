@@ -5,13 +5,14 @@ from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from django.db import IntegrityError, transaction
+from django.db.models import F
 from .models import Session, SessionUser, Restaurant
 from .serializers import (
     SessionSerializer,
     SessionUserSerializer,
     RestaurantSerializer,
-    SessionUserSerializer,
 )
+from rankerapi import serializers
 
 
 class SessionViewSet(viewsets.ModelViewSet):
@@ -21,6 +22,17 @@ class SessionViewSet(viewsets.ModelViewSet):
     filterset_fields = ["code"]
     permission_classes = [AllowAny]
     lookup_field = "code"
+
+    def perform_create(self, serializer):
+        session = serializer.save()
+        username = self.request.data.get("username")
+
+        if username:
+            SessionUser.objects.create(username=username, session_code=session)
+        else:
+            raise serializers.ValidationError(
+                "Username is required to create a SessionUser."
+            )
 
 
 class SessionUserViewSet(viewsets.ModelViewSet):
@@ -34,16 +46,54 @@ class RestaurantViewSet(viewsets.ModelViewSet):
     serializer_class = RestaurantSerializer
 
 
+class JoinSessionView(APIView):
+    def post(self, request, session_code, *args, **kwargs):
+        username = request.data.get("username")
+
+        if not username:
+            return Response(
+                {"detail": "Username is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        session = get_object_or_404(Session, code=session_code)
+
+        if SessionUser.objects.filter(session_code=session, username=username).exists():
+            return Response(
+                {"detail": f"User '{username}' is already part of this session."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        session_user = SessionUser.objects.create(
+            username=username,
+            session_code=session,
+        )
+
+        session_data = SessionSerializer(session).data
+
+        session_data["user"] = SessionUserSerializer(session_user).data
+
+        return Response(session_data, status=status.HTTP_201_CREATED)
+
+
 class VetoView(APIView):
     def put(self, request, session_code):
         session = get_object_or_404(Session, code=session_code)
-
+        username = request.data.get("username")
+        session_user = get_object_or_404(SessionUser, username=username)
         vetoed_restaurants = request.data.get("vetoed_restaurants", [])
 
         if not vetoed_restaurants:
+            updated_restaurants = session.restaurants.all()
+            updated_restaurant_data = RestaurantSerializer(
+                updated_restaurants, many=True
+            ).data
             return Response(
-                {"detail": "No restaurants were vetoed."},
-                status=status.HTTP_204_NO_CONTENT,
+                {
+                    "detail": "No restaurants were vetoed.",
+                    "restaurants": updated_restaurant_data,
+                },
+                status=status.HTTP_200_OK,
             )
 
         invalid_restaurants = [
@@ -62,10 +112,20 @@ class VetoView(APIView):
 
         try:
             with transaction.atomic():
-                session.restaurants.filter(id__in=vetoed_restaurants).update(veto=True)
-
+                session.restaurants.filter(id__in=vetoed_restaurants).update(
+                    veto=F("veto") + 1
+                )
+                session_user.vetoes.extend(vetoed_restaurants)
+                session_user.save()
+                updated_restaurants = session.restaurants.all()
+                updated_restaurant_data = RestaurantSerializer(
+                    updated_restaurants, many=True
+                ).data
             return Response(
-                {"detail": "Restaurants successfully vetoed."},
+                {
+                    "detail": "Restaurants successfully vetoed.",
+                    "restaurants": updated_restaurant_data,
+                },
                 status=status.HTTP_200_OK,
             )
 
@@ -84,24 +144,16 @@ class VetoView(APIView):
             )
 
 
-class NonVetoedView(APIView):
+class VetoedView(APIView):
     def get(self, request, session_code):
         try:
             session = Session.objects.get(code=session_code)
 
-            non_vetoed_restaurants = session.restaurants.filter(veto=False)
+            vetoed_restaurant_ids = session.restaurants.filter(veto=True).values_list(
+                "id", flat=True
+            )
 
-            restaurant_data = [
-                {
-                    "id": restaurant.id,
-                    "name": restaurant.name,
-                    "photo_url": restaurant.photo_url,
-                    "rating": restaurant.rating,
-                }
-                for restaurant in non_vetoed_restaurants
-            ]
-
-            return Response(restaurant_data, status=status.HTTP_200_OK)
+            return Response(vetoed_restaurant_ids, status=status.HTTP_200_OK)
 
         except Session.DoesNotExist:
             return Response(

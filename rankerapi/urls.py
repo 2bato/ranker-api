@@ -1,11 +1,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
+    JoinSessionView,
     SessionViewSet,
     SessionUserViewSet,
     RestaurantViewSet,
     VetoView,
-    NonVetoedView,
+    VetoedView,
     RankingView,
     ResultView,
 )
@@ -24,9 +25,9 @@ urlpatterns = [
         name="veto",
     ),
     path(
-        "sessions/<str:session_code>/nonvetoed/",
-        NonVetoedView.as_view(),
-        name="nonveto",
+        "sessions/<str:session_code>/vetoed/",
+        VetoedView.as_view(),
+        name="vetoed",
     ),
     path(
         "sessions/<str:session_code>/ranking/",
@@ -34,4 +35,5 @@ urlpatterns = [
         name="ranking",
     ),
     path("sessions/<str:session_code>/result/", ResultView.as_view(), name="result"),
+    path("sessions/<str:session_code>/join/", JoinSessionView.as_view(), name="join"),
 ]

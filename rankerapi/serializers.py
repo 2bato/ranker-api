@@ -15,7 +15,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SessionUser
-        fields = ["id", "username", "session_code", "rankings"]
+        fields = ["id", "username", "session_code", "rankings", "vetoes"]
 
     def validate_rankings(self, value):
         if not isinstance(value, dict):

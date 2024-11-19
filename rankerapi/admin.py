@@ -10,7 +10,7 @@ class SessionAdmin(admin.ModelAdmin):
 
 @admin.register(SessionUser)
 class SessionUserAdmin(admin.ModelAdmin):
-    list_display = ("username", "session_code", "rankings")
+    list_display = ("username", "session_code", "rankings", "vetoes")
     search_fields = ("username", "session__code")
     list_filter = ("session_code",)
 

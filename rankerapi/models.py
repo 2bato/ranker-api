@@ -20,7 +20,7 @@ class Restaurant(models.Model):
     name = models.CharField(max_length=255)
     photo_url = models.URLField(blank=True)
     rating = models.FloatField()
-    veto = models.BooleanField(default=False)
+    veto = models.IntegerField(default=0)
     overall_rank = models.FloatField(default=0)
     session = models.ForeignKey(
         Session,
@@ -40,6 +40,7 @@ class SessionUser(models.Model):
         Session, related_name="users", on_delete=models.CASCADE
     )
     rankings = models.JSONField(default=dict, blank=True)
+    vetoes = models.JSONField(default=list, blank=True)
 
     def __str__(self):
         return self.username
