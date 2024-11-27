@@ -38,6 +38,7 @@ def get_restaurants(sender, instance, created, **kwargs):
                 "https://places.googleapis.com/v1/places:searchNearby",
                 json=request_payload,
                 headers=headers,
+                verify=False,
             )
 
             if response.status_code != 200:
@@ -61,12 +62,11 @@ def get_restaurants(sender, instance, created, **kwargs):
                 ):
                     photo_reference = place["photos"][0].get("name")
                     if photo_reference:
-                        photo_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_reference}&key={api_key}"
 
                         restaurant = Restaurant.objects.create(
                             name=name,
                             rating=rating,
-                            photo_url=photo_url,
+                            photo_url=photo_reference,
                             overall_rank=0,
                         )
                         instance.restaurants.add(restaurant)
