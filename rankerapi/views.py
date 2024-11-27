@@ -165,29 +165,43 @@ class VetoedView(APIView):
 
 class RankingView(APIView):
     def put(self, request, session_code):
+        session = get_object_or_404(Session, code=session_code)
+        username = request.data.get("username")
+        user = get_object_or_404(SessionUser, username=username)
+
         try:
-            session = Session.objects.get(code=session_code)
-            username = request.data.get("username")
-            user = SessionUser.objects.get(session_code=session, username=username)
+            rankings_data = request.data.get("restaurants", [])
+            max_rank = max([r.get("rank") for r in rankings_data])
 
-            rankings_data = request.data.get("rankings", {})
+            user_rankings = {}
 
-            user.rankings = rankings_data
-            user.save()
-
-            for restaurant_id, ranking in rankings_data.items():
+            for r in rankings_data:
                 try:
+                    restaurant_id = r.get("id")
+                    rank = r.get("rank")
+
+                    normalized_rank = rank / max_rank if max_rank else 0
+
                     restaurant = Restaurant.objects.get(id=restaurant_id)
-                    restaurant.overall_rank += ranking
+
+                    restaurant.overall_rank += normalized_rank
                     restaurant.save()
+
+                    user_rankings[restaurant_id] = rank
                 except Restaurant.DoesNotExist:
                     return Response(
                         {"error": f"Restaurant with ID {restaurant_id} not found"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-
+            user.rankings = user_rankings
+            user.save()
+            session.ranked_count += 1
+            session.save()
             return Response(
-                {"message": "Rankings updated successfully."}, status=status.HTTP_200_OK
+                {
+                    "message": "Rankings updated successfully.",
+                },
+                status=status.HTTP_200_OK,
             )
 
         except Session.DoesNotExist:
@@ -209,18 +223,11 @@ class ResultView(APIView):
             session = Session.objects.get(code=session_code)
 
             restaurants = session.restaurants.all()
-
-            result = [
-                {
-                    "name": restaurant.name,
-                    "rating": restaurant.rating,
-                    "overall_rank": restaurant.overall_rank,
-                    "photo_url": restaurant.photo_url,
-                }
-                for restaurant in restaurants
-            ]
-
-            return Response(result, status=status.HTTP_200_OK)
+            restaurants_data = RestaurantSerializer(restaurants, many=True).data
+            return Response(
+                {"restaurants": restaurants_data, "ranked": session.ranked_count},
+                status=status.HTTP_200_OK,
+            )
 
         except Session.DoesNotExist:
             return Response(

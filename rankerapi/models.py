@@ -7,6 +7,7 @@ class Session(models.Model):
     latitude = models.FloatField()
     longitude = models.FloatField()
     count = models.IntegerField(default=0)
+    ranked_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.code

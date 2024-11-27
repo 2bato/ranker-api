@@ -35,4 +35,5 @@ class SessionSerializer(serializers.ModelSerializer):
             "longitude",
             "count",
             "restaurants",
+            "ranked_count",
         ]

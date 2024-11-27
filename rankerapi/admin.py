@@ -4,7 +4,7 @@ from .models import Session, SessionUser, Restaurant
 
 @admin.register(Session)
 class SessionAdmin(admin.ModelAdmin):
-    list_display = ("code", "latitude", "longitude", "created")
+    list_display = ("code", "latitude", "longitude", "created", "ranked_count")
     search_fields = ("code",)
 
 
@@ -24,6 +24,7 @@ class RestaurantAdmin(admin.ModelAdmin):
         "photo_url",
         "veto",
         "session",
+        "overall_rank",
     )
     search_fields = (
         "name",
